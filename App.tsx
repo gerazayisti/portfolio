@@ -310,6 +310,7 @@ export default function App() {
                       className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
                       referrerPolicy="no-referrer"
                     />
+		
                     
                     {/* Corner rivets */}
                     <span className="absolute top-2 left-2 font-mono text-[9px] bg-[#0A0A0A] text-[#FAF9F6] px-2 py-0.5 border border-[#FAF9F6] uppercase tracking-wider">
@@ -318,32 +319,13 @@ export default function App() {
                     <span className="absolute bottom-2 right-2 font-mono text-[9px] bg-[#1E40AF] text-[#FAF9F6] px-2 py-0.5 font-bold">
                       忍 S-RANK
                     </span>
-
-                    {/* Contrôle rapide d'importation au survol */}
-                    <div className="absolute inset-0 bg-[#0A0A0A]/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-4 gap-2 text-center backdrop-blur-[2px]">
-                      <span className="font-mono text-[11px] font-bold text-[#FAF9F6] tracking-wider uppercase">
-                        PHOTO PRINCIPALE DU PORTFOLIO
-                      </span>
-                      <label className="cursor-pointer px-4 py-2 bg-[#1E40AF] hover:bg-[#1E40AF]/90 text-[#FAF9F6] font-mono text-xs font-bold uppercase border border-[#FAF9F6] flex items-center gap-2 shadow-[3px_3px_0px_0px_#FAF9F6] transition-transform active:translate-x-0.5 active:translate-y-0.5">
-                        <Camera className="w-4 h-4 text-[#FAF9F6]" />
-                        
-                    </div>
-                  </div>
-
-                  {/* Notification de mise à jour de photo */}
-                  {isPhotoUpdatedNotice && (
-                    <div className="mt-2 p-2 bg-[#1E40AF] text-[#FAF9F6] border border-[#0A0A0A] font-mono text-xs flex items-center gap-2 animate-in fade-in">
-                      <CheckCircle className="w-4 h-4 text-[#60A5FA] shrink-0" />
-                      <span>Photo principale mise à jour avec succès !</span>
-                    </div>
-                  )}
-
+		</div>
                   {/* Nom Poppins 700 + rôle kicker bleu en dessous */}
                   <div className="pt-4 space-y-1">
                     <h3 className="font-sans text-xl font-bold text-[#0A0A0A] tracking-tight uppercase">
                       GERVAIS AZANGA AYISSI
                     </h3>
-                    <Kicker text="ENTREPRENEUR TECH // ARCHITECTE LOGICIEL & UI/UX" kanji="術" />
+                    <Kicker text="ENTREPRENEUR TECH // ARCHITECTE LOGICIEL & UI/UX DESIGNEUR" kanji="術" />
                   </div>
 
                   {/* Technical Coordinates stamp */}
