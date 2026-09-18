@@ -1,390 +1,682 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Github, 
   Linkedin, 
   Mail, 
-  Menu, 
-  X, 
-  ChevronRight, 
   Download, 
   ExternalLink,
   Trophy, 
   Medal, 
-  Send, 
-  Sparkles, 
-  Bot,
-  CheckCircle2,
   ArrowUpRight,
   Code,
   Smartphone,
-  Loader2,
+  CheckCircle2,
+  Send,
+  MessageSquare,
   Globe,
-  Heart,
-  MessageSquare
+  Award,
+  Layers,
+  Cpu,
+  BookmarkCheck,
+  Code2,
+  Palette,
+  Sliders,
+  Plus,
+  Phone,
+  CheckCircle
 } from 'lucide-react';
-import { AWARDS, PROJECTS, EXPERIENCES, EDUCATION, SKILLS, CERTIFICATIONS, VOLUNTEER_WORK } from './constants';
-import { askGervaisBot } from './services/geminiService';
-
-// --- Composants UI Atomiques ---
-
-const Button = ({ children, variant = "primary", className = "", ...props }: any) => {
-  const variants: any = {
-    primary: "bg-black text-white hover:bg-neutral-800",
-    outline: "border border-neutral-200 bg-white hover:bg-neutral-50 text-black",
-    ghost: "hover:bg-neutral-100 text-black",
-  };
-  return (
-    <button 
-      className={`inline-flex items-center justify-center rounded-lg text-sm font-semibold transition-all h-11 px-6 disabled:opacity-50 ${variants[variant]} ${className}`} 
-      {...props}
-    >
-      {children}
-    </button>
-  );
-};
-
-const SectionHeading = ({ title, subtitle }: { title: string, subtitle?: string }) => (
-  <div className="mb-12">
-    <h2 className="text-3xl font-extrabold tracking-tighter sm:text-4xl mb-3 uppercase">{title}</h2>
-    {subtitle && <p className="text-neutral-500 max-w-2xl text-lg leading-relaxed">{subtitle}</p>}
-    <div className="h-1 w-20 bg-black mt-6"></div>
-  </div>
-);
-
-// --- Chat IA ---
-
-const ChatWidget = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([{ role: 'ai', text: "Bonjour, je suis l'assistant IA de Gervais. Comment puis-je vous renseigner sur son parcours ou ses projets ?" }]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const endRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => { 
-    if (isOpen) {
-      endRef.current?.scrollIntoView({ behavior: 'smooth' }); 
-    }
-  }, [messages, isOpen]);
-
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || loading) return;
-    const msg = input;
-    setInput('');
-    setMessages(prev => [...prev, { role: 'user', text: msg }]);
-    setLoading(true);
-    const res = await askGervaisBot(msg);
-    setMessages(prev => [...prev, { role: 'ai', text: res }]);
-    setLoading(false);
-  };
-
-  return (
-    <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end pointer-events-none">
-      {isOpen && (
-        <div className="bg-white border border-neutral-200 rounded-2xl shadow-2xl w-80 sm:w-96 h-[500px] mb-4 flex flex-col overflow-hidden pointer-events-auto animate-in slide-in-from-bottom-5">
-          <div className="bg-black text-white p-4 flex justify-between items-center">
-            <div className="flex items-center gap-2"><Sparkles className="h-4 w-4" /> <span className="text-sm font-bold">G-Assistant</span></div>
-            <button onClick={() => setIsOpen(false)}><X className="h-4 w-4" /></button>
-          </div>
-          <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-neutral-50">
-            {messages.map((m, i) => (
-              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm ${m.role === 'user' ? 'bg-black text-white rounded-br-none' : 'bg-white border border-neutral-200 rounded-bl-none shadow-sm text-neutral-800'}`}>
-                  {m.text}
-                </div>
-              </div>
-            ))}
-            {loading && (
-              <div className="flex justify-start">
-                <div className="bg-white border border-neutral-200 rounded-2xl px-4 py-2 shadow-sm flex items-center gap-2">
-                  <Loader2 className="h-3 w-3 animate-spin text-black" />
-                  <span className="text-xs text-neutral-400">G-Bot réfléchit...</span>
-                </div>
-              </div>
-            )}
-            <div ref={endRef} />
-          </div>
-          <form onSubmit={handleSend} className="p-3 bg-white border-t flex gap-2">
-            <input 
-              value={input} 
-              onChange={e => setInput(e.target.value)} 
-              placeholder="Posez une question..." 
-              className="flex-1 px-4 py-2 text-sm bg-neutral-100 rounded-full focus:outline-none focus:ring-2 focus:ring-black" 
-            />
-            <button type="submit" className="p-2 bg-black text-white rounded-full hover:bg-neutral-800 transition-colors">
-              <Send className="h-4 w-4" />
-            </button>
-          </form>
-        </div>
-      )}
-      <button 
-        onClick={() => setIsOpen(!isOpen)} 
-        className="pointer-events-auto h-14 w-14 bg-black text-white rounded-full shadow-xl flex items-center justify-center hover:scale-105 transition-transform"
-      >
-        {isOpen ? <X className="h-6 w-6" /> : <Bot className="h-7 w-7" />}
-      </button>
-    </div>
-  );
-};
-
-// --- Application Principale ---
+import { AWARDS, EDUCATION, SKILLS, CERTIFICATIONS, VOLUNTEER_WORK } from './constants';
+import { Project, DesignProject, Experience, ProfileInfo } from './types';
+import { 
+  getAllCodeProjects, 
+  getAllDesigns, 
+  getAllExperiences, 
+  getProfileInfo, 
+  saveClientMessage 
+} from './services/storageService';
+import { Kicker } from './components/Kicker';
+import { BrutalistButton } from './components/BrutalistButton';
+import { Navbar } from './components/Navbar';
+import { ImpactBanner } from './components/ImpactBanner';
+import { ProjectCard } from './components/ProjectCard';
+import { DesignCard } from './components/DesignCard';
+import { DesignLightbox } from './components/DesignLightbox';
+import { AdminDashboardModal } from './components/AdminDashboardModal';
+import { Footer } from './components/Footer';
+import { ChatWidget } from './components/ChatWidget';
+import { SectionWatermark, HeadbandPlate, RasenganRings, ShurikenCross } from './components/MangaGraphics';
 
 export default function App() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [contactForm, setContactForm] = useState({ name: '', subject: '', message: '' });
+  // Données dynamiques du portfolio administrables
+  const [codeProjectsList, setCodeProjectsList] = useState<Project[]>([]);
+  const [designsList, setDesignsList] = useState<DesignProject[]>([]);
+  const [experiencesList, setExperiencesList] = useState<Experience[]>([]);
+  const [profileInfo, setProfileInfo] = useState<ProfileInfo>(getProfileInfo());
+
+  // Navigation et onglets de projets (Code vs Design)
+  const [projectsTab, setProjectsTab] = useState<'code' | 'design'>('code');
+  const [designFilter, setDesignFilter] = useState<string>('TOUT');
+  const [activeDesignLightbox, setActiveDesignLightbox] = useState<DesignProject | null>(null);
+  
+  // Terminal d'administration Maître (verrouillé et masqué aux clients)
+  const [isDashboardOpen, setIsDashboardOpen] = useState(false);
+
+  // Formulaire de contact avec sauvegarde JSON et transmission WhatsApp
+  const [contactForm, setContactForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
+  const [formSubmitted, setFormSubmitted] = useState(false);
+  const [lastWhatsAppUrl, setLastWhatsAppUrl] = useState('');
+
+  const refreshPortfolioData = () => {
+    setCodeProjectsList(getAllCodeProjects());
+    setDesignsList(getAllDesigns());
+    setExperiencesList(getAllExperiences());
+    setProfileInfo(getProfileInfo());
+  };
 
   useEffect(() => {
-    const onScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+    refreshPortfolioData();
 
-  const handleWhatsAppSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const phoneNumber = "237695183768"; 
-    const text = `Bonjour Gervais,\n\nJe suis ${contactForm.name}.\nObjet : ${contactForm.subject}\n\nMessage : ${contactForm.message}`;
-    const encodedText = encodeURIComponent(text);
-    window.open(`https://wa.me/${phoneNumber}?text=${encodedText}`, '_blank');
-  };
+    // Raccourci secret pour ouvrir le terminal maître (Ctrl+Shift+G ou Cmd+Shift+G)
+    // ainsi que paramètre d'URL direct ?admin=true ou #admin
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'G' || e.key === 'g')) {
+        e.preventDefault();
+        setIsDashboardOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    if (window.location.search.includes('admin=true') || window.location.hash === '#admin') {
+      setIsDashboardOpen(true);
+    }
+
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const scrollTo = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' });
-      setIsMenuOpen(false);
     }
   };
 
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // 1. Sauvegarde locale en format JSON structuré
+    saveClientMessage({
+      name: contactForm.name,
+      phone: contactForm.phone,
+      email: contactForm.email,
+      subject: contactForm.subject,
+      message: contactForm.message
+    });
+
+    // 2. Préparation du message WhatsApp enrichi
+    const phoneNumber = "237695183768";
+    const lines = [
+      `Bonjour Gervais,`,
+      `Je vous contacte depuis votre portfolio professionnel :`,
+      ``,
+      `👤 Nom : ${contactForm.name}`,
+      contactForm.phone ? `📞 Téléphone / WhatsApp : ${contactForm.phone}` : null,
+      contactForm.email ? `✉️ Email : ${contactForm.email}` : null,
+      `🎯 Objet : ${contactForm.subject}`,
+      ``,
+      `📝 Message / Expression des besoins :`,
+      `${contactForm.message}`
+    ].filter(Boolean).join('\n');
+
+    const encoded = encodeURIComponent(lines);
+    const waUrl = `https://wa.me/${phoneNumber}?text=${encoded}`;
+    setLastWhatsAppUrl(waUrl);
+    setFormSubmitted(true);
+
+    // Ouverture WhatsApp
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
+  };
+
   return (
-    <div className="min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white antialiased">
-      {/* Header */}
-      <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 backdrop-blur-md border-b border-neutral-100 py-3' : 'bg-transparent py-6'}`}>
-        <div className="container mx-auto px-6 flex justify-between items-center">
-          <div className="text-xl font-black tracking-tighter flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
-            <div className="h-8 w-8 bg-black text-white flex items-center justify-center rounded">G</div>
-            <span className="hidden sm:inline">GERVAIS AZANGA AYISSI</span>
-          </div>
-          <nav className="hidden md:flex items-center gap-8">
-            {['À propos', 'Prix', 'Projets', 'Parcours'].map(item => (
-              <button 
-                key={item} 
-                onClick={() => scrollTo(item.toLowerCase().replace(' ', '-').replace('à', 'a'))} 
-                className="text-sm font-bold text-neutral-500 hover:text-black transition-colors"
-              >
-                {item}
-              </button>
-            ))}
-            <Button variant="primary" onClick={() => scrollTo('contact')}>Contact</Button>
-          </nav>
-          <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X /> : <Menu />}
-          </button>
-        </div>
-      </header>
+    <div className="min-h-screen bg-[#FAF9F6] text-[#0A0A0A] font-sans antialiased overflow-x-hidden selection:bg-[#1E40AF] selection:text-[#FAF9F6]">
+      {/* Top Navbar */}
+      <Navbar 
+        onNavigate={scrollTo} 
+      />
 
-      {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-40 bg-white p-6 pt-24 animate-in fade-in flex flex-col gap-6">
-           <nav className="flex flex-col gap-6 text-2xl font-black uppercase tracking-tighter">
-            {['À propos', 'Prix', 'Projets', 'Parcours', 'Contact'].map(item => (
-              <button 
-                key={item} 
-                onClick={() => scrollTo(item.toLowerCase().replace(' ', '-').replace('à', 'a'))} 
-                className="text-left hover:text-neutral-400"
-              >
-                {item}
-              </button>
-            ))}
-          </nav>
-        </div>
-      )}
-
-      <main>
-        {/* Hero Section */}
-        <section id="a-propos" className="relative pt-32 pb-20 md:pt-48 md:pb-40 overflow-hidden">
-          <div className="absolute top-0 right-0 w-1/2 h-full bg-neutral-50 -z-10 skew-x-12 translate-x-20"></div>
-          <div className="container mx-auto px-6 flex flex-col md:flex-row items-center gap-16">
-            <div className="flex-1">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-100 text-[10px] font-black uppercase tracking-widest mb-6 border border-neutral-200">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                Disponible pour projets innovants
+      <main className="w-full">
+        {/* =========================================================================
+            SECTION 01: HERO / PORTRAIT ARCHITECTURAL (Fond Crème #FAF9F6)
+           ========================================================================= */}
+        <section id="a-propos" className="relative py-16 sm:py-24 md:py-32 border-b border-[#0A0A0A] overflow-hidden constructivist-grid-bg">
+          <SectionWatermark number="01" color="black" position="top-right" />
+          
+          <div className="container mx-auto px-6 relative z-10">
+            {/* Top Sub-Bar Manga / Koma header */}
+            <div className="flex flex-wrap items-center justify-between gap-4 pb-6 mb-12 border-b border-[#0A0A0A]">
+              <div className="flex items-center gap-3">
+                <HeadbandPlate title="SHINOBI ARCHITECT // TECH LEADER" kanji="忍" variant="light" />
+                <span className="hidden sm:inline-block font-mono text-[11px] text-[#6B6B6B]">
+                  [ YAOUNDÉ × LYON // GLOBAL DELIVERY ]
+                </span>
               </div>
-              <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[1.1] mb-8">
-                UI/UX Designer & <br/><span className="text-neutral-400">Front-end Developer.</span>
-              </h1>
-              <p className="text-xl text-neutral-500 leading-relaxed mb-10 max-w-xl">
-                Passionné par la création de solutions numériques innovantes. J'allie créativité et expertise technique pour concevoir des interfaces modernes, performantes et centrées sur l'utilisateur.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Button variant="primary" className="gap-2" onClick={() => scrollTo('projets')}>
-                  Voir mes Réalisations <ArrowUpRight className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" className="gap-2">
-                  <Download className="h-4 w-4" /> Télécharger CV
-                </Button>
-              </div>
-              <div className="mt-12 flex items-center gap-6">
-                <a href="https://github.com/gerazayisti" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-black transition-colors"><Github className="h-6 w-6" /></a>
-                <a href="https://cm.linkedin.com/in/gervais-azanga-ayissi" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-black transition-colors"><Linkedin className="h-6 w-6" /></a>
-                <a href="mailto:gerazayisti@gmail.com" className="text-neutral-400 hover:text-black transition-colors"><Mail className="h-6 w-6" /></a>
+              <div className="font-mono text-xs font-semibold text-[#0A0A0A] flex items-center gap-2">
+                <span className="w-2 h-2 bg-[#1E40AF] inline-block animate-pulse" />
+                <span>{profileInfo.availability}</span>
               </div>
             </div>
-            <div className="flex-1 relative">
-              <div className="w-full aspect-square max-w-[450px] mx-auto relative group">
-                <div className="absolute inset-0 bg-neutral-100 rounded-3xl -rotate-6 border border-neutral-200 group-hover:rotate-0 transition-transform duration-500"></div>
-                <img 
-                  src="https://media.licdn.com/dms/image/v2/D4E03AQG3Q7E_9Q_9aw/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1718222444155?e=1746662400&v=beta&t=M8-9e-R6-v1t9_9t1-S9-v_r_W1-y_R_W1_R_W1_R_W1" 
-                  className="relative z-10 w-full h-full object-cover rounded-3xl grayscale group-hover:grayscale-0 transition-all duration-700 shadow-2xl border border-white" 
-                  alt="Gervais Azanga Ayissi" 
-                />
-              </div>
-            </div>
-          </div>
-        </section>
 
-        {/* Awards Section */}
-        <section id="prix" className="py-24 bg-white border-y border-neutral-100">
-          <div className="container mx-auto px-6">
-            <SectionHeading title="Prix & Reconnaissances" subtitle="L'excellence récompensée dans les domaines de l'IA et de l'innovation digitale." />
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              {AWARDS.map((award, i) => (
-                <div key={i} className="group p-8 border border-neutral-100 hover:border-black transition-all duration-500 rounded-2xl bg-neutral-50/50">
-                  <div className="h-12 w-12 bg-white border border-neutral-200 rounded-xl flex items-center justify-center mb-6 group-hover:bg-black group-hover:text-white transition-colors">
-                    {i === 0 ? <Trophy className="h-6 w-6" /> : <Medal className="h-6 w-6" />}
-                  </div>
-                  <h3 className="text-xl font-bold mb-3">{award.title}</h3>
-                  <p className="text-neutral-500 text-sm leading-relaxed mb-4">{award.description}</p>
-                  <div className="text-[10px] font-black uppercase tracking-widest text-neutral-400">{award.date}</div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+              {/* Colonne gauche : Typographie massive, Règle Typo Signature */}
+              <div className="lg:col-span-7 space-y-8">
+                <Kicker text={profileInfo.kicker} kanji="志" />
+
+                <h1 className="font-sans text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter text-[#0A0A0A] leading-[1.05] uppercase">
+                  {profileInfo.headlineH1}
+                </h1>
+
+                <p className="font-sans text-base sm:text-lg text-[#6B6B6B] leading-relaxed max-w-2xl whitespace-pre-line">
+                  {profileInfo.bioHero}
+                </p>
+
+                {/* CTAs Primaires & Secondaires */}
+                <div className="pt-2 flex flex-wrap items-center gap-4">
+                  <BrutalistButton 
+                    variant="primary" 
+                    onClick={() => scrollTo('projets')}
+                  >
+                    EXPLORER LES MISSIONS S-RANK
+                  </BrutalistButton>
+
+                  <BrutalistButton 
+                    variant="secondary" 
+                    icon={<Download className="w-4 h-4" />}
+                    onClick={() => scrollTo('contact')}
+                  >
+                    CONTACTER DIRECTEMENT
+                  </BrutalistButton>
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
 
-        {/* Projets Section */}
-        <section id="projets" className="py-24 bg-white">
-          <div className="container mx-auto px-6">
-            <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
-              <SectionHeading title="Projets & Travaux" subtitle="Des solutions concrètes allant de la HealthTech à la gestion EdTech." />
-              <div className="flex gap-2">
-                <Button variant="outline" className="h-10 px-4 text-xs" onClick={() => window.open('https://github.com/gerazayisti', '_blank')}>Voir sur GitHub</Button>
+                {/* KPI Constructivistes / Shinobi Data Matrix */}
+                <div className="pt-8 border-t border-[#0A0A0A] grid grid-cols-2 sm:grid-cols-3 gap-6">
+                  <div className="border-l-2 border-[#0A0A0A] pl-4">
+                    <div className="font-mono text-3xl sm:text-4xl font-black text-[#0A0A0A]">
+                      02<span className="text-[#1E40AF]">+</span>
+                    </div>
+                    <div className="font-mono text-[10px] uppercase tracking-wider text-[#6B6B6B] mt-1">
+                      PRIX CONTINENTAUX IA
+                    </div>
+                  </div>
+
+                  <div className="border-l-2 border-[#0A0A0A] pl-4">
+                    <div className="font-mono text-3xl sm:text-4xl font-black text-[#0A0A0A]">
+                      20<span className="text-[#1E40AF]">+</span>
+                    </div>
+                    <div className="font-mono text-[10px] uppercase tracking-wider text-[#6B6B6B] mt-1">
+                      SOLUTIONS LIVRÉES
+                    </div>
+                  </div>
+
+                  <div className="border-l-2 border-[#0A0A0A] pl-4 col-span-2 sm:col-span-1">
+                    <div className="font-mono text-3xl sm:text-4xl font-black text-[#0A0A0A]">
+                      NASA<span className="text-[#1E40AF]">/GDG</span>
+                    </div>
+                    <div className="font-mono text-[10px] uppercase tracking-wider text-[#6B6B6B] mt-1">
+                      LEADERSHIP COMMUNAUTAIRE
+                    </div>
+                  </div>
+                </div>
+
+                {/* Réseaux rapides */}
+                <div className="flex items-center gap-6 pt-2 font-mono text-xs text-[#0A0A0A]">
+                  <span className="text-[#6B6B6B] tracking-widest">// ALLIANCES :</span>
+                  <a 
+                    href="https://github.com/gerazayisti" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="hover:text-[#1E40AF] flex items-center gap-1.5 transition-colors"
+                  >
+                    <Github className="w-4 h-4" /> <span>GITHUB</span>
+                  </a>
+                  <a 
+                    href="https://cm.linkedin.com/in/gervais-azanga-ayissi" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="hover:text-[#1E40AF] flex items-center gap-1.5 transition-colors"
+                  >
+                    <Linkedin className="w-4 h-4" /> <span>LINKEDIN</span>
+                  </a>
+                </div>
               </div>
-            </div>
-            <div className="grid lg:grid-cols-3 gap-8">
-              {PROJECTS.map((project, i) => (
-                <div key={i} className="group border border-neutral-100 rounded-3xl overflow-hidden hover:shadow-2xl transition-all duration-700">
-                  <div className="aspect-video relative overflow-hidden bg-neutral-100">
-                    <img 
-                      src={project.imageUrl} 
-                      alt={project.title} 
-                      className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-105" 
+
+              {/* Colonne droite : Portrait Équipe / Hero N&B strict 1px, 0px radius */}
+              <div className="lg:col-span-5 relative">
+                {/* Cadre de type Manga Koma Panel */}
+                <div className="border-2 border-[#0A0A0A] bg-[#FAF9F6] p-4 relative">
+                  {/* Filigrane géométrique Rasengan */}
+                  <div className="absolute -top-10 -right-10 pointer-events-none opacity-25">
+                    <RasenganRings size={160} stroke="#1E40AF" />
+                  </div>
+
+                  {/* Image N&B, cadre noir 1px, rayon 0px */}
+                  <div className="relative aspect-[4/5] w-full border border-[#0A0A0A] overflow-hidden bg-[#0A0A0A]">
+                    <img
+                      src="https://media.licdn.com/dms/image/v2/D4E03AQG3Q7E_9Q_9aw/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1718222444155?e=1746662400&v=beta&t=M8-9e-R6-v1t9_9t1-S9-v_r_W1-y_R_W1_R_W1_R_W1"
+                      alt="Gervais Azanga Ayissi"
+                      className="w-full h-full object-cover grayscale contrast-125"
                     />
-                    <div className="absolute top-4 left-4">
-                      <span className="px-3 py-1 bg-white/90 backdrop-blur-md border border-neutral-200 rounded text-[10px] font-black uppercase tracking-widest">{project.impact}</span>
-                    </div>
+                    
+                    {/* Corner rivets */}
+                    <span className="absolute top-2 left-2 font-mono text-[9px] bg-[#0A0A0A] text-[#FAF9F6] px-2 py-0.5 border border-[#FAF9F6]">
+                      GERVAIS_AZANGA.RAW
+                    </span>
+                    <span className="absolute bottom-2 right-2 font-mono text-[9px] bg-[#1E40AF] text-[#FAF9F6] px-2 py-0.5 font-bold">
+                      忍 S-RANK
+                    </span>
                   </div>
-                  <div className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <h3 className="text-xl font-bold tracking-tight">{project.title}</h3>
-                      <div className="flex gap-2">
-                        {project.githubUrl && (
-                          <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="p-2 border border-neutral-200 rounded-lg hover:bg-black hover:text-white transition-all">
-                            <Github className="h-4 w-4" />
-                          </a>
-                        )}
-                        {project.demoUrl && (
-                          <a href={project.demoUrl} target="_blank" rel="noopener noreferrer" className="p-2 border border-neutral-200 rounded-lg hover:bg-black hover:text-white transition-all">
-                            <ExternalLink className="h-4 w-4" />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                    <p className="text-neutral-500 text-sm mb-6 leading-relaxed line-clamp-2">
-                      {project.description}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {project.tags.map(tag => (
-                        <span key={tag} className="px-2 py-1 bg-neutral-50 border border-neutral-100 rounded text-[9px] font-bold text-neutral-400">{tag}</span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
 
-        {/* Timeline Section */}
-        <section id="parcours" className="py-24 bg-neutral-50 border-y border-neutral-100">
-          <div className="container mx-auto px-6 max-w-5xl">
-            <SectionHeading title="Expérience & Parcours" subtitle="Mon parcours professionnel entre entrepreneuriat, consulting et design." />
-            <div className="relative border-l-2 border-neutral-200 ml-4 pl-8 space-y-16">
-              {EXPERIENCES.map((exp, i) => (
-                <div key={i} className="relative">
-                  <div className="absolute -left-[41px] top-1 h-5 w-5 rounded-full border-4 border-white bg-black shadow-sm"></div>
-                  <div className="mb-1 text-sm font-black text-neutral-400 uppercase tracking-widest">{exp.period}</div>
-                  <div className="flex flex-wrap items-center gap-2 mb-4">
-                    <h3 className="text-2xl font-black">{exp.role}</h3>
-                    <span className="text-neutral-400 font-bold">@ {exp.company}</span>
-                    <span className="px-2 py-1 bg-white border border-neutral-100 rounded text-[10px] font-black uppercase tracking-widest">{exp.type}</span>
+                  {/* Nom Poppins 700 + rôle kicker bleu en dessous */}
+                  <div className="pt-4 space-y-1">
+                    <h3 className="font-sans text-xl font-bold text-[#0A0A0A] tracking-tight uppercase">
+                      GERVAIS AZANGA AYISSI
+                    </h3>
+                    <Kicker text="ENTREPRENEUR TECH // ARCHITECTE LOGICIEL & UI/UX" kanji="術" />
                   </div>
-                  <p className="text-neutral-600 mb-6 leading-relaxed max-w-3xl">{exp.description}</p>
-                  {exp.tasks && (
-                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-                      {exp.tasks.map((task, j) => (
-                        <li key={j} className="text-sm text-neutral-500 flex items-start gap-2">
-                          <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0 text-neutral-300" />
-                          <span>{task}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  <div className="text-xs text-neutral-400 flex items-center gap-1.5"><Globe className="h-3 w-3" /> {exp.location}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
 
-        {/* Skills & Certs Section */}
-        <section className="py-24 bg-white">
-          <div className="container mx-auto px-6">
-            <div className="grid lg:grid-cols-2 gap-16">
-              <div>
-                <SectionHeading title="Compétences" subtitle="Maîtrise technique et vision stratégique." />
-                <div className="space-y-8">
-                  <div>
-                    <h4 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2 text-neutral-400"><Code className="h-4 w-4"/> Langages & Frameworks</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {[...SKILLS.languages, ...SKILLS.frameworks].map(s => (
-                        <span key={s} className="px-3 py-1 bg-black text-white text-[11px] font-bold rounded-full">{s}</span>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2 text-neutral-400"><Smartphone className="h-4 w-4"/> Design & Outils</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {SKILLS.tools.map(s => (
-                        <span key={s} className="px-3 py-1 border border-neutral-200 text-[11px] font-bold rounded-full">{s}</span>
-                      ))}
-                    </div>
+                  {/* Technical Coordinates stamp */}
+                  <div className="mt-4 pt-3 border-t border-[#0A0A0A] flex items-center justify-between font-mono text-[10px] text-[#6B6B6B]">
+                    <span>SYS: REACT × TS × PYTHON</span>
+                    <span>LOC: 3.8480° N, 11.5021° E</span>
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            BARRE D'IMPACT 1 (Plein Bleu #1E40AF - Typo Blanche XXL Italic)
+           ========================================================================= */}
+        <ImpactBanner 
+          phrase="volonté_du_feu ▸ code_absolu"
+          subphrase="RIGUEUR ARCHITECTURALE SUISSE // CODE DE QUALITÉ ABSOLUE"
+          kanjiStamp="志"
+        />
+
+        {/* =========================================================================
+            SECTION 02: PRIX & RECONNAISSANCES (Fond Noir #0A0A0A - Section Inversée)
+           ========================================================================= */}
+        <section id="prix" className="relative py-20 sm:py-28 md:py-32 bg-[#0A0A0A] text-[#FAF9F6] border-b border-[#0A0A0A] overflow-hidden constructivist-grid-bg-dark">
+          <SectionWatermark number="02" color="white" position="top-right" />
+
+          <div className="container mx-auto px-6 relative z-10">
+            {/* Header de section */}
+            <div className="mb-16 border-b border-[#FAF9F6]/20 pb-8">
+              <Kicker text="PALMARÈS & DISTINCTIONS S-RANK" kanji="賞" variant="dark" />
+              <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-[#FAF9F6] mt-4 uppercase">
+                Distinctions africaines & <span className="text-[#60A5FA] italic">impact prouvé</span>.
+              </h2>
+              <p className="font-sans text-base text-[#FAF9F6]/75 mt-3 max-w-2xl leading-relaxed">
+                Reconnaissance continentale récompensant l'innovation technologique de rupture au service de la santé publique et de l'intelligence artificielle.
+              </p>
+            </div>
+
+            {/* Grille des Prix */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl">
+              {AWARDS.map((award, idx) => (
+                <div 
+                  key={idx} 
+                  className="border-2 border-[#FAF9F6] bg-[#0A0A0A] p-8 flex flex-col justify-between relative group hover:border-[#60A5FA] transition-colors"
+                >
+                  <div className="absolute top-4 right-4 font-mono text-xs font-bold text-[#60A5FA] border border-[#60A5FA] px-2.5 py-0.5">
+                    {award.date} // {award.category}
+                  </div>
+
+                  <div>
+                    <div className="w-12 h-12 border border-[#FAF9F6] bg-[#0A0A0A] flex items-center justify-center mb-6 text-[#FAF9F6] group-hover:bg-[#1E40AF] group-hover:border-[#1E40AF] transition-colors">
+                      {idx === 0 ? <Trophy className="w-6 h-6" /> : <Medal className="w-6 h-6" />}
+                    </div>
+
+                    <div className="font-mono text-[10px] text-[#60A5FA] uppercase tracking-widest mb-1">
+                      ▪ DISTINCTION D'HONNEUR 0{idx + 1}
+                    </div>
+
+                    <h3 className="font-sans text-2xl font-bold text-[#FAF9F6] tracking-tight mb-4">
+                      {award.title}
+                    </h3>
+
+                    <p className="font-sans text-sm text-[#FAF9F6]/80 leading-relaxed">
+                      {award.description}
+                    </p>
+                  </div>
+
+                  <div className="mt-8 pt-4 border-t border-[#FAF9F6]/20 flex items-center justify-between font-mono text-[11px] text-[#FAF9F6]/60">
+                    <span>PROJET : MedIA</span>
+                    <span className="text-[#60A5FA] font-bold">1ER RANG CONTINENTAL</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Citations de rigueur constructiviste */}
+            <div className="mt-16 p-6 border border-[#FAF9F6]/20 bg-[#0A0A0A] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 font-mono text-xs text-[#FAF9F6]/70">
+              <div className="flex items-center gap-3">
+                <span className="w-2 h-2 bg-[#60A5FA]" />
+                <span>E-HEALTH HACKATHON & INNOVATION SUMMIT // VALIDÉ PAR JURY INTERNATIONAL</span>
+              </div>
+              <span className="text-[#60A5FA] font-bold">[ CERTIFIÉ AUDITÉ ]</span>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            SECTION 03: PROJETS & MISSIONS S-RANK (Fond Crème #FAF9F6)
+           ========================================================================= */}
+        <section id="projets" className="relative py-20 sm:py-28 md:py-32 bg-[#FAF9F6] border-b border-[#0A0A0A] overflow-hidden constructivist-grid-bg">
+          <SectionWatermark number="03" color="black" position="top-right" />
+
+          <div className="container mx-auto px-6 relative z-10">
+            {/* Header de section avec contrôle segmenté CODE vs DESIGN */}
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-12 gap-6 border-b border-[#0A0A0A] pb-8">
               <div>
-                <SectionHeading title="Certifications" subtitle="Apprentissage continu et spécialisations." />
-                <div className="grid gap-3">
-                  {CERTIFICATIONS.map((cert, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 bg-neutral-50 border border-neutral-100 rounded-xl hover:bg-white hover:shadow-md transition-all group">
-                      <div>
-                        <div className="text-sm font-bold group-hover:text-black transition-colors">{cert.title}</div>
-                        <div className="text-xs text-neutral-400">{cert.issuer}</div>
+                <Kicker text="PORTFOLIO BICEPHALE // CODE & DESIGN" kanji="術" />
+                <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-[#0A0A0A] mt-4 uppercase">
+                  Missions concrètes, <span className="text-[#1E40AF] italic">code & design</span>.
+                </h2>
+                <p className="font-sans text-base text-[#6B6B6B] mt-3 max-w-2xl leading-relaxed">
+                  Une double compétence assumée : découvrez séparément nos architectures logicielles déployées en production et nos maquettes tactiles et designs d'expérience utilisateur.
+                </p>
+              </div>
+
+              {/* Sélecteur d'onglets (Code vs Design) */}
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  onClick={() => setProjectsTab('code')}
+                  className={`px-5 py-3 border-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2.5 transition-all ${
+                    projectsTab === 'code'
+                      ? 'bg-[#0A0A0A] text-[#FAF9F6] border-[#0A0A0A] shadow-[4px_4px_0px_0px_#1E40AF]'
+                      : 'bg-[#FAF9F6] text-[#0A0A0A] border-[#0A0A0A] hover:bg-[#0A0A0A]/5'
+                  }`}
+                >
+                  <Code2 className="w-4 h-4 text-[#60A5FA]" />
+                  <span>SECTION CODE & SYSTÈMES ({codeProjectsList.length})</span>
+                </button>
+
+                <button
+                  onClick={() => setProjectsTab('design')}
+                  className={`px-5 py-3 border-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2.5 transition-all ${
+                    projectsTab === 'design'
+                      ? 'bg-[#1E40AF] text-[#FAF9F6] border-[#1E40AF] shadow-[4px_4px_0px_0px_#0A0A0A]'
+                      : 'bg-[#FAF9F6] text-[#0A0A0A] border-[#0A0A0A] hover:bg-[#0A0A0A]/5'
+                  }`}
+                >
+                  <Palette className="w-4 h-4 text-[#FAF9F6]" />
+                  <span>SECTION DESIGN & UI/UX ({designsList.length})</span>
+                </button>
+              </div>
+            </div>
+
+            {/* ==========================================
+                SOUS-SECTION A : CODE & SYSTÈMES
+               ========================================== */}
+            {projectsTab === 'code' && (
+              <div className="space-y-12 animate-in fade-in duration-300">
+                <div className="flex flex-wrap items-center justify-between gap-4 p-4 border border-[#0A0A0A] bg-[#FAF9F6]">
+                  <div className="font-mono text-xs text-[#0A0A0A] flex items-center gap-2 font-bold uppercase">
+                    <span className="w-2 h-2 bg-[#1E40AF]" />
+                    <span>SOLUTIONS LOGICIELLES FULLSTACK, MOBILES & BACKENDS SCALABLES</span>
+                  </div>
+
+                  <BrutalistButton 
+                    variant="secondary"
+                    onClick={() => window.open('https://github.com/gerazayisti', '_blank', 'noopener,noreferrer')}
+                  >
+                    VOIR TOUS LES DÉPÔTS GITHUB
+                  </BrutalistButton>
+                </div>
+
+                {/* Grille des Cards Projets Code */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {codeProjectsList.map((project, idx) => (
+                    <ProjectCard 
+                      key={idx} 
+                      project={project} 
+                      index={idx}
+                      missionRank={idx === 0 ? 'S-RANK' : 'A-RANK'}
+                    />
+                  ))}
+                </div>
+
+                {/* Banner info bas de section Code */}
+                <div className="mt-16 p-6 border border-[#0A0A0A] bg-[#FAF9F6] flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-xs text-[#0A0A0A]">
+                  <div className="flex items-center gap-3">
+                    <span className="w-2 h-2 bg-[#1E40AF]" />
+                    <span className="font-bold">TOUS LES CODES SOURCES SONT REVUS SELON LES NORMES STRICTES TYPESCRIPT & PYTHON.</span>
+                  </div>
+                  <span className="text-[#1E40AF] font-bold">[ 100% PRODUCTION READY ]</span>
+                </div>
+              </div>
+            )}
+
+            {/* ==========================================
+                SOUS-SECTION B : DESIGN & PRODUITS
+               ========================================== */}
+            {projectsTab === 'design' && (
+              <div className="space-y-10 animate-in fade-in duration-300">
+                {/* Barre de contrôle du studio design */}
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-5 border border-[#0A0A0A] bg-[#FAF9F6]">
+                  <div>
+                    <span className="font-mono text-xs text-[#1E40AF] font-bold uppercase tracking-wider block mb-1">
+                      // DIRECTION ARTISTIQUE, MAQUETTES TACTILES & PROTOTYPAGE PRODUIT
+                    </span>
+                    <p className="font-sans text-xs sm:text-sm text-[#6B6B6B]">
+                      Cliquez sur une maquette pour l'afficher en haute résolution avec la date et les détails de conception.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Filtres thématiques de design */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-mono text-xs text-[#6B6B6B] uppercase mr-2 flex items-center gap-1">
+                    <Sliders className="w-3.5 h-3.5" /> FILTRER :
+                  </span>
+                  {['TOUT', 'Mobile', 'Système', 'E-Commerce', 'Brutalisme', 'HealthTech'].map((filt) => (
+                    <button
+                      key={filt}
+                      onClick={() => setDesignFilter(filt)}
+                      className={`font-mono text-xs px-3 py-1 border transition-colors ${
+                        designFilter === filt
+                          ? 'bg-[#1E40AF] text-[#FAF9F6] border-[#1E40AF] font-bold'
+                          : 'bg-[#FAF9F6] text-[#0A0A0A] border-[#0A0A0A]/30 hover:border-[#0A0A0A]'
+                      }`}
+                    >
+                      {filt}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Grille des Designs */}
+                {(() => {
+                  const filteredDesigns = designsList.filter((d) => {
+                    if (designFilter === 'TOUT') return true;
+                    const search = designFilter.toLowerCase();
+                    return (
+                      d.typeOfWork.toLowerCase().includes(search) ||
+                      d.title.toLowerCase().includes(search) ||
+                      (d.tools && d.tools.some(t => t.toLowerCase().includes(search)))
+                    );
+                  });
+
+                  if (filteredDesigns.length === 0) {
+                    return (
+                      <div className="p-16 border border-dashed border-[#0A0A0A] text-center bg-[#FAF9F6] space-y-4">
+                        <Palette className="w-10 h-10 text-[#1E40AF] mx-auto opacity-50" />
+                        <h4 className="font-sans text-lg font-bold text-[#0A0A0A]">
+                          Aucun projet de design dans cette catégorie.
+                        </h4>
+                        <p className="font-sans text-sm text-[#6B6B6B] max-w-md mx-auto">
+                          Sélectionnez une autre catégorie de filtre pour découvrir les maquettes d'interface et d'expérience produit.
+                        </p>
                       </div>
-                      {cert.status ? (
-                        <span className="text-[10px] font-bold bg-neutral-200 px-2 py-1 rounded uppercase tracking-widest">{cert.status}</span>
-                      ) : (
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    );
+                  }
+
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {filteredDesigns.map((design) => (
+                        <DesignCard 
+                          key={design.id} 
+                          design={design} 
+                          onOpenLightbox={(d) => setActiveDesignLightbox(d)} 
+                        />
+                      ))}
+                    </div>
+                  );
+                })()}
+
+                {/* Banner bas de section Design */}
+                <div className="mt-16 p-6 border border-[#0A0A0A] bg-[#FAF9F6] flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-xs text-[#0A0A0A]">
+                  <div className="flex items-center gap-3">
+                    <span className="w-2 h-2 bg-[#1E40AF]" />
+                    <span className="font-bold">DESIGN SYSTÈMES RIGOUROUX ET ADAPTÉS AUX CONTRAINTES MOBILES EN AFRIQUE ET À L'INTERNATIONAL.</span>
+                  </div>
+                  <span className="text-[#1E40AF] font-bold">[ ERGONOMIE CENTRÉE USAGER ]</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* =========================================================================
+            BARRE D'IMPACT 2 (Plein Bleu #1E40AF - Typo Blanche XXL Italic)
+           ========================================================================= */}
+        <ImpactBanner 
+          phrase="vision_business ▸ solutions_utilisateurs"
+          subphrase="INTUITION ENTREPRENEURIALE // COMPRÉHENSION IMMÉDIATE // LIVRAISON ULTRA-RAPIDE"
+          kanjiStamp="術"
+        />
+
+        {/* =========================================================================
+            SECTION 04: PARCOURS & ALLIANCES (Fond Noir #0A0A0A - Section Inversée)
+           ========================================================================= */}
+        <section id="parcours" className="relative py-20 sm:py-28 md:py-32 bg-[#0A0A0A] text-[#FAF9F6] border-b border-[#0A0A0A] overflow-hidden constructivist-grid-bg-dark">
+          <SectionWatermark number="04" color="white" position="top-right" />
+
+          <div className="container mx-auto px-6 relative z-10">
+            {/* Header de section */}
+            <div className="mb-16 border-b border-[#FAF9F6]/20 pb-8">
+              <Kicker text="PARCOURS PROFESSIONNEL & ALLIANCES" kanji="歴" variant="dark" />
+              <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-[#FAF9F6] mt-4 uppercase">
+                Trajectoire pro & <span className="text-[#60A5FA] italic">leadership stratégique</span>.
+              </h2>
+              <p className="font-sans text-base text-[#FAF9F6]/75 mt-3 max-w-2xl leading-relaxed">
+                Une progression forgée entre conseil stratégique national pour l'éducation (CAMEDU), directions de l'information, design mobile international et coordination de communautés technologiques mondiales (NASA, Google).
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+              {/* Colonne gauche : Timeline des expériences (8 colonnes) */}
+              <div className="lg:col-span-8 space-y-8">
+                <div className="font-mono text-xs uppercase tracking-widest text-[#60A5FA] mb-6 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-[#60A5FA]" />
+                  <span>// REGISTRE DES POSTES & RESPONSABILITÉS</span>
+                </div>
+
+                <div className="space-y-6">
+                  {experiencesList.map((exp, idx) => (
+                    <div 
+                      key={idx} 
+                      className="border border-[#FAF9F6]/30 bg-[#0A0A0A] p-6 hover:border-[#60A5FA] transition-colors relative"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <span className="font-mono text-xs font-bold text-[#60A5FA] uppercase tracking-wider">
+                          {exp.period} // {exp.type}
+                        </span>
+                        <span className="font-mono text-xs text-[#FAF9F6]/60 flex items-center gap-1">
+                          <Globe className="w-3.5 h-3.5 text-[#60A5FA]" /> {exp.location}
+                        </span>
+                      </div>
+
+                      <h3 className="font-sans text-2xl font-bold text-[#FAF9F6] tracking-tight mb-1">
+                        {exp.role} <span className="text-[#60A5FA]">@ {exp.company}</span>
+                      </h3>
+
+                      <p className="font-sans text-sm text-[#FAF9F6]/80 leading-relaxed mb-4">
+                        {exp.description}
+                      </p>
+
+                      {exp.tasks && exp.tasks.length > 0 && (
+                        <div className="pt-3 border-t border-[#FAF9F6]/10">
+                          <ul className="space-y-2">
+                            {exp.tasks.map((task, tIdx) => (
+                              <li key={tIdx} className="font-mono text-xs text-[#FAF9F6]/70 flex items-start gap-2.5">
+                                <span className="w-1.5 h-1.5 bg-[#60A5FA] shrink-0 mt-1.5" />
+                                <span>{task}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Colonne droite : Volontariat, NASA & Communautés (4 colonnes) */}
+              <div className="lg:col-span-4 space-y-8">
+                <div className="border-2 border-[#60A5FA] p-6 bg-[#0A0A0A] space-y-6">
+                  <div className="font-mono text-xs uppercase tracking-widest text-[#60A5FA] flex items-center gap-2 border-b border-[#FAF9F6]/20 pb-3">
+                    <span className="w-2 h-2 bg-[#60A5FA]" />
+                    <span>ALLIANCES & GUILDES TECH</span>
+                  </div>
+
+                  <p className="font-sans text-xs text-[#FAF9F6]/80 leading-relaxed">
+                    Engagement actif dans la transmission de la connaissance et l'organisation des plus grands rassemblements développeurs en Afrique centrale.
+                  </p>
+
+                  <div className="divide-y divide-[#FAF9F6]/15">
+                    {VOLUNTEER_WORK.map((vol, vIdx) => (
+                      <div key={vIdx} className="py-3 flex flex-col justify-between">
+                        <span className="font-sans text-sm font-bold text-[#FAF9F6]">
+                          {vol.role}
+                        </span>
+                        <div className="flex items-center justify-between font-mono text-[11px] text-[#60A5FA] mt-0.5">
+                          <span>{vol.organization}</span>
+                          <span className="text-[#FAF9F6]/50">{vol.period}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-4 border-t border-[#FAF9F6]/20 font-mono text-[10px] text-[#FAF9F6]/60">
+                    // VOLONTÉ DU FEU TRANSMIS AUX NOUVELLES GÉNÉRATIONS
+                  </div>
+                </div>
+
+                {/* Bloc Éducation */}
+                <div className="border border-[#FAF9F6]/30 p-6 bg-[#0A0A0A] space-y-4">
+                  <div className="font-mono text-xs uppercase tracking-widest text-[#FAF9F6] flex items-center gap-2 border-b border-[#FAF9F6]/20 pb-3">
+                    <span className="w-2 h-2 bg-[#1E40AF]" />
+                    <span>FORMATION UNIVERSITAIRE</span>
+                  </div>
+
+                  {EDUCATION.map((edu, eIdx) => (
+                    <div key={eIdx} className="space-y-1">
+                      <div className="font-sans text-base font-bold text-[#FAF9F6]">
+                        {edu.degree}
+                      </div>
+                      <div className="font-mono text-xs text-[#60A5FA]">
+                        {edu.school} // {edu.period}
+                      </div>
+                      {edu.description && (
+                        <p className="font-sans text-xs text-[#FAF9F6]/70">
+                          {edu.description}
+                        </p>
                       )}
                     </div>
                   ))}
@@ -394,85 +686,404 @@ export default function App() {
           </div>
         </section>
 
-        {/* Contact Section - WhatsApp Redirection */}
-        <section id="contact" className="py-24 bg-black text-white relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none">
-            <div className="grid grid-cols-12 h-full">
-              {Array.from({length: 12}).map((_, i) => <div key={i} className="border-r border-white"></div>)}
+        {/* =========================================================================
+            SECTION 05: JUTSU & TECH MATRIX (Fond Crème #FAF9F6)
+           ========================================================================= */}
+        <section id="skills" className="relative py-20 sm:py-28 md:py-32 bg-[#FAF9F6] border-b border-[#0A0A0A] overflow-hidden constructivist-grid-bg">
+          <SectionWatermark number="05" color="black" position="top-right" />
+
+          <div className="container mx-auto px-6 relative z-10">
+            {/* Header de section */}
+            <div className="mb-16 border-b border-[#0A0A0A] pb-8">
+              <Kicker text="ARSENAL TECHNIQUE & JUTSU" kanji="術" />
+              <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-[#0A0A0A] mt-4 uppercase">
+                Maîtrise technique & <span className="text-[#1E40AF] italic">arsenal jutsu</span>.
+              </h2>
+              <p className="font-sans text-base text-[#6B6B6B] mt-3 max-w-2xl leading-relaxed">
+                Une panoplie complète de compétences : de la data science avancée et vision par ordinateur jusqu'aux frameworks web et au design d'interfaces utilisateur haut de gamme.
+              </p>
+            </div>
+
+            {/* 12-col modular constructivist grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {/* Carte 1 : Frameworks & Langages (dont Rasengan.js !) */}
+              <div className="border border-[#0A0A0A] bg-[#FAF9F6] p-6 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#0A0A0A]">
+                    <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#0A0A0A] flex items-center gap-2">
+                      <Code className="w-4 h-4 text-[#1E40AF]" />
+                      LANGAGES & FRAMEWORKS
+                    </span>
+                    <span className="font-mono text-[10px] bg-[#0A0A0A] text-[#FAF9F6] px-1.5 py-0.5">
+                      CORE
+                    </span>
+                  </div>
+
+                  <p className="font-sans text-xs text-[#6B6B6B] mb-4">
+                    Architectures réactives, typage strict et micro-frameworks performants :
+                  </p>
+
+                  <div className="flex flex-wrap gap-2">
+                    {[...SKILLS.languages, ...SKILLS.frameworks].map((tech) => (
+                      <span
+                        key={tech}
+                        className={`font-mono text-xs font-semibold px-2.5 py-1 border ${
+                          tech === 'Rasengan.js' 
+                            ? 'bg-[#1E40AF] text-[#FAF9F6] border-[#1E40AF]' 
+                            : 'bg-[#FAF9F6] text-[#0A0A0A] border-[#0A0A0A]'
+                        }`}
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-8 pt-3 border-t border-[#0A0A0A]/20 font-mono text-[10px] text-[#6B6B6B]">
+                  // COMPATIBILITÉ TS STRICTE + SSR ACCÉLÉRÉ
+                </div>
+              </div>
+
+              {/* Carte 2 : Data Science & Intelligence Artificielle */}
+              <div className="border border-[#0A0A0A] bg-[#FAF9F6] p-6 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#0A0A0A]">
+                    <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#0A0A0A] flex items-center gap-2">
+                      <Cpu className="w-4 h-4 text-[#1E40AF]" />
+                      IA & DATA SCIENCE
+                    </span>
+                    <span className="font-mono text-[10px] bg-[#0A0A0A] text-[#FAF9F6] px-1.5 py-0.5">
+                      DEEP
+                    </span>
+                  </div>
+
+                  <p className="font-sans text-xs text-[#6B6B6B] mb-4">
+                    Modélisation prédictive, vision par ordinateur et pipelines LLM :
+                  </p>
+
+                  <div className="flex flex-wrap gap-2">
+                    {SKILLS.dataAI.map((aiSkill) => (
+                      <span
+                        key={aiSkill}
+                        className="font-mono text-xs font-semibold px-2.5 py-1 bg-[#FAF9F6] text-[#0A0A0A] border border-[#0A0A0A]"
+                      >
+                        {aiSkill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-8 pt-3 border-t border-[#0A0A0A]/20 font-mono text-[10px] text-[#6B6B6B]">
+                  // RECONNAISSANCE D'IMAGES & MODÈLES BIOMÉDICAUX
+                </div>
+              </div>
+
+              {/* Carte 3 : Outils Design & Prototypage */}
+              <div className="border border-[#0A0A0A] bg-[#FAF9F6] p-6 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#0A0A0A]">
+                    <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#0A0A0A] flex items-center gap-2">
+                      <Smartphone className="w-4 h-4 text-[#1E40AF]" />
+                      DESIGN & STRATÉGIE
+                    </span>
+                    <span className="font-mono text-[10px] bg-[#0A0A0A] text-[#FAF9F6] px-1.5 py-0.5">
+                      UX/UI
+                    </span>
+                  </div>
+
+                  <p className="font-sans text-xs text-[#6B6B6B] mb-4">
+                    Conception de design systems sans faille, maquettage haute fidélité :
+                  </p>
+
+                  <div className="flex flex-wrap gap-2">
+                    {[...SKILLS.tools, ...SKILLS.expertise].map((item) => (
+                      <span
+                        key={item}
+                        className="font-mono text-xs font-semibold px-2.5 py-1 bg-[#FAF9F6] text-[#0A0A0A] border border-[#0A0A0A]"
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-8 pt-3 border-t border-[#0A0A0A]/20 font-mono text-[10px] text-[#6B6B6B]">
+                  // PROTOCOLES FIGMA & ARCHITECTURE DES COMPOSANTS
+                </div>
+              </div>
+            </div>
+
+            {/* Certifications professionnelles (Bordures 1px strictes, 0px radius) */}
+            <div className="mt-16">
+              <div className="flex items-center justify-between border-b border-[#0A0A0A] pb-4 mb-6">
+                <h3 className="font-sans text-xl font-bold uppercase text-[#0A0A0A] flex items-center gap-2">
+                  <BookmarkCheck className="w-5 h-5 text-[#1E40AF]" />
+                  CERTIFICATIONS OFFICIELLES
+                </h3>
+                <span className="font-mono text-xs text-[#6B6B6B]">
+                  GOOGLE × WORLDQUANT × MTF × DATACAMP
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {CERTIFICATIONS.map((cert, idx) => (
+                  <div
+                    key={idx}
+                    className="border border-[#0A0A0A] bg-[#FAF9F6] p-4 flex items-center justify-between group hover:border-[#1E40AF] transition-colors"
+                  >
+                    <div>
+                      <h4 className="font-sans text-sm font-bold text-[#0A0A0A] group-hover:text-[#1E40AF] transition-colors">
+                        {cert.title}
+                      </h4>
+                      <p className="font-mono text-xs text-[#6B6B6B]">
+                        {cert.issuer}
+                      </p>
+                    </div>
+
+                    {cert.status ? (
+                      <span className="font-mono text-[10px] font-bold border border-[#0A0A0A] px-2 py-0.5 bg-[#FAF9F6] text-[#1E40AF]">
+                        {cert.status}
+                      </span>
+                    ) : (
+                      <CheckCircle2 className="w-4 h-4 text-[#1E40AF] shrink-0" />
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-          
+        </section>
+
+        {/* =========================================================================
+            SECTION 06: CONTACT DIRECT (Fond Noir #0A0A0A - Section Inversée)
+           ========================================================================= */}
+        <section id="contact" className="relative py-20 sm:py-28 md:py-32 bg-[#0A0A0A] text-[#FAF9F6] border-b border-[#0A0A0A] overflow-hidden constructivist-grid-bg-dark">
+          <SectionWatermark number="06" color="white" position="top-right" />
+
           <div className="container mx-auto px-6 relative z-10">
-            <div className="max-w-4xl mx-auto">
-              <div className="text-center mb-16">
-                <h2 className="text-4xl md:text-6xl font-black mb-8 tracking-tight">Prêt à <span className="text-neutral-500">Collaborer ?</span></h2>
-                <p className="text-neutral-400 text-lg mb-4 max-w-2xl mx-auto leading-relaxed">
-                  Vous avez un projet en tête ? Contactez-moi directement via WhatsApp pour une réponse rapide.
+            <div className="max-w-5xl mx-auto">
+              {/* Header de section */}
+              <div className="text-center mb-16 border-b border-[#FAF9F6]/20 pb-8">
+                <Kicker text="COLLABORATION & TRANSMISSION DE MISSION" kanji="連" variant="dark" />
+                <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-[#FAF9F6] mt-4 uppercase">
+                  Activez votre vision avec <span className="text-[#60A5FA] italic">rigueur absolue</span>.
+                </h2>
+                <p className="font-sans text-base text-[#FAF9F6]/75 mt-3 max-w-2xl mx-auto leading-relaxed">
+                  Prêt à concevoir un produit d'élite, à auditer votre architecture ou à structurer vos modèles IA ? Contact direct et réactif.
                 </p>
               </div>
 
-              <div className="grid md:grid-cols-5 gap-12 items-start">
-                <div className="md:col-span-2 space-y-10">
-                  <div className="space-y-4">
-                    <h4 className="text-xs font-black uppercase tracking-widest text-neutral-500">Contact Direct</h4>
-                    <div className="flex flex-col gap-4">
-                      <a href="mailto:gerazayisti@gmail.com" className="flex items-center gap-3 text-lg font-bold hover:text-neutral-400 transition-colors">
-                        <Mail className="h-5 w-5" /> gerazayisti@gmail.com
-                      </a>
-                      <div className="flex items-center gap-3 text-lg font-bold">
-                        <MessageSquare className="h-5 w-5" /> +237 695 183 768
-                      </div>
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-12 items-start">
+                {/* Coordonnées directes (5 colonnes) */}
+                <div className="md:col-span-5 space-y-8">
+                  <div className="border border-[#FAF9F6]/30 p-6 bg-[#0A0A0A] space-y-4">
+                    <div className="font-mono text-xs uppercase tracking-widest text-[#60A5FA] flex items-center gap-2 border-b border-[#FAF9F6]/20 pb-2">
+                      <span className="w-2 h-2 bg-[#60A5FA]" />
+                      <span>CANAUX DIRECTS</span>
+                    </div>
+
+                    <a 
+                      href={`mailto:${profileInfo.email}`} 
+                      className="flex items-center gap-3 text-base font-bold text-[#FAF9F6] hover:text-[#60A5FA] transition-colors py-2 border-b border-[#FAF9F6]/10"
+                    >
+                      <Mail className="w-5 h-5 text-[#60A5FA] shrink-0" />
+                      <span className="font-mono text-sm">{profileInfo.email}</span>
+                    </a>
+
+                    <a 
+                      href={`https://wa.me/${profileInfo.whatsappNumber}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 text-base font-bold text-[#FAF9F6] hover:text-[#60A5FA] transition-colors py-2 border-b border-[#FAF9F6]/10"
+                    >
+                      <MessageSquare className="w-5 h-5 text-[#60A5FA] shrink-0" />
+                      <span className="font-mono text-sm">{profileInfo.phone}</span>
+                    </a>
+
+                    <div className="pt-2 font-mono text-xs text-[#FAF9F6]/60">
+                      // RÉPONSE EN MOINS DE 24 HEURES ASSURÉE
                     </div>
                   </div>
 
-                  <div className="space-y-4">
-                    <h4 className="text-xs font-black uppercase tracking-widest text-neutral-500">Social</h4>
-                    <div className="flex gap-6">
-                      <a href="https://cm.linkedin.com/in/gervais-azanga-ayissi" target="_blank" rel="noopener noreferrer" className="hover:text-neutral-400 transition-colors"><Linkedin className="h-8 w-8" /></a>
-                      <a href="https://github.com/gerazayisti" target="_blank" rel="noopener noreferrer" className="hover:text-neutral-400 transition-colors"><Github className="h-8 w-8" /></a>
+                  <div className="border border-[#FAF9F6]/30 p-6 bg-[#0A0A0A] space-y-4">
+                    <div className="font-mono text-xs uppercase tracking-widest text-[#60A5FA] flex items-center gap-2 border-b border-[#FAF9F6]/20 pb-2">
+                      <span className="w-2 h-2 bg-[#60A5FA]" />
+                      <span>RÉSEAUX PROFESSIONNELS</span>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <a
+                        href="https://cm.linkedin.com/in/gervais-azanga-ayissi"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 border border-[#FAF9F6] font-mono text-xs font-bold text-[#FAF9F6] hover:bg-[#1E40AF] hover:border-[#1E40AF] transition-colors flex items-center gap-2 rounded-[6px]"
+                      >
+                        <Linkedin className="w-4 h-4" /> LINKEDIN
+                      </a>
+
+                      <a
+                        href="https://github.com/gerazayisti"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 border border-[#FAF9F6] font-mono text-xs font-bold text-[#FAF9F6] hover:bg-[#1E40AF] hover:border-[#1E40AF] transition-colors flex items-center gap-2 rounded-[6px]"
+                      >
+                        <Github className="w-4 h-4" /> GITHUB
+                      </a>
                     </div>
                   </div>
                 </div>
 
-                <div className="md:col-span-3">
-                  <form onSubmit={handleWhatsAppSubmit} className="space-y-6 bg-neutral-900/50 p-8 rounded-3xl border border-neutral-800 backdrop-blur-sm shadow-2xl">
-                    <div className="grid sm:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Votre Nom</label>
-                        <input 
-                          required
-                          value={contactForm.name}
-                          onChange={e => setContactForm({...contactForm, name: e.target.value})}
-                          placeholder="Ex: Jean Dupont"
-                          className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-white transition-all placeholder:text-neutral-600" 
-                        />
+                {/* Formulaire WhatsApp direct & Enregistrement JSON (7 colonnes) */}
+                <div className="md:col-span-7">
+                  {formSubmitted ? (
+                    <div className="border-2 border-[#60A5FA] p-8 bg-[#0A0A0A] space-y-6 animate-in fade-in">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle className="w-8 h-8 text-[#60A5FA]" />
+                        <div>
+                          <h3 className="font-sans text-xl font-bold text-[#FAF9F6] tracking-tight">
+                            Message Enregistré & Transmis !
+                          </h3>
+                          <span className="font-mono text-xs text-[#60A5FA] uppercase font-semibold">
+                            [ CONSERVATION SÉCURISÉE EN FORMAT JSON & WHATSAPP ]
+                          </span>
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Objet</label>
-                        <input 
-                          required
-                          value={contactForm.subject}
-                          onChange={e => setContactForm({...contactForm, subject: e.target.value})}
-                          placeholder="Ex: Projet Mobile"
-                          className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-white transition-all placeholder:text-neutral-600" 
-                        />
+
+                      <p className="font-sans text-sm text-[#FAF9F6]/80 leading-relaxed">
+                        Votre demande a été structurée en format JSON dans notre boîte de réception locale et la fenêtre de discussion WhatsApp avec <strong className="text-[#FAF9F6]">Gervais Azanga (+237 695 18 37 68)</strong> a été initiée.
+                      </p>
+
+                      <div className="pt-4 border-t border-[#FAF9F6]/20 flex flex-wrap gap-4">
+                        {lastWhatsAppUrl && (
+                          <a
+                            href={lastWhatsAppUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-6 py-3 bg-[#25D366] text-[#0A0A0A] font-sans text-xs font-black uppercase tracking-wider hover:bg-[#1EBE5D] transition-colors inline-flex items-center gap-2 border border-[#FAF9F6]"
+                          >
+                            <MessageSquare className="w-4 h-4 fill-current" />
+                            <span>RÉOUVRIR LA CONVERSATION WHATSAPP</span>
+                          </a>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormSubmitted(false);
+                            setContactForm({
+                              name: '',
+                              phone: '',
+                              email: '',
+                              subject: '',
+                              message: ''
+                            });
+                          }}
+                          className="px-5 py-3 border border-[#FAF9F6] text-[#FAF9F6] font-mono text-xs font-bold uppercase tracking-wider hover:bg-[#FAF9F6] hover:text-[#0A0A0A] transition-colors"
+                        >
+                          ENVOYER UN AUTRE MESSAGE
+                        </button>
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Message</label>
-                      <textarea 
-                        required
-                        value={contactForm.message}
-                        onChange={e => setContactForm({...contactForm, message: e.target.value})}
-                        rows={4}
-                        placeholder="Dites-moi tout sur votre projet..."
-                        className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-white transition-all placeholder:text-neutral-600 resize-none" 
-                      />
-                    </div>
-                    <Button type="submit" className="w-full h-14 bg-white text-black hover:bg-neutral-200 text-lg font-black gap-2 transition-transform active:scale-[0.98]">
-                      Envoyer sur WhatsApp <MessageSquare className="h-5 w-5" />
-                    </Button>
-                  </form>
+                  ) : (
+                    <form 
+                      onSubmit={handleContactSubmit} 
+                      className="border-2 border-[#FAF9F6] p-8 bg-[#0A0A0A] space-y-6"
+                    >
+                      <div className="font-mono text-xs uppercase tracking-widest text-[#60A5FA] flex items-center justify-between border-b border-[#FAF9F6]/20 pb-3">
+                        <span className="flex items-center gap-2">
+                          <span className="w-2 h-2 bg-[#60A5FA]" />
+                          <span>TRANSMISSION DIRECTE WHATSAPP // ARCHIVAGE JSON</span>
+                        </span>
+                        <span>[ SÉCURITÉ CLIENT ]</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="block font-mono text-xs uppercase tracking-wider text-[#FAF9F6]">
+                            VOTRE NOM // ORGANISATION *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={contactForm.name}
+                            onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                            placeholder="Ex: Jean Dupont (Studio / Entreprise)"
+                            className="w-full bg-[#0A0A0A] text-[#FAF9F6] border border-[#FAF9F6] px-4 py-3 font-sans text-sm focus:outline-none focus:border-[#60A5FA] placeholder:text-[#FAF9F6]/40"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="block font-mono text-xs uppercase tracking-wider text-[#FAF9F6]">
+                            TÉLÉPHONE / WHATSAPP *
+                          </label>
+                          <input
+                            type="tel"
+                            required
+                            value={contactForm.phone}
+                            onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
+                            placeholder="Ex: +237 6XX XX XX XX"
+                            className="w-full bg-[#0A0A0A] text-[#FAF9F6] border border-[#FAF9F6] px-4 py-3 font-mono text-sm focus:outline-none focus:border-[#60A5FA] placeholder:text-[#FAF9F6]/40"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="block font-mono text-xs uppercase tracking-wider text-[#FAF9F6]">
+                            EMAIL (OPTIONNEL)
+                          </label>
+                          <input
+                            type="email"
+                            value={contactForm.email}
+                            onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                            placeholder="nom@entreprise.com"
+                            className="w-full bg-[#0A0A0A] text-[#FAF9F6] border border-[#FAF9F6] px-4 py-3 font-sans text-sm focus:outline-none focus:border-[#60A5FA] placeholder:text-[#FAF9F6]/40"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="block font-mono text-xs uppercase tracking-wider text-[#FAF9F6]">
+                            OBJET DU PROJET *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={contactForm.subject}
+                            onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })}
+                            placeholder="Ex: Application Mobile, Refonte UI, Caisse POS"
+                            className="w-full bg-[#0A0A0A] text-[#FAF9F6] border border-[#FAF9F6] px-4 py-3 font-sans text-sm focus:outline-none focus:border-[#60A5FA] placeholder:text-[#FAF9F6]/40"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block font-mono text-xs uppercase tracking-wider text-[#FAF9F6]">
+                          MESSAGE / CAHIER DES CHARGES *
+                        </label>
+                        <textarea
+                          required
+                          rows={4}
+                          value={contactForm.message}
+                          onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                          placeholder="Détaillez vos objectifs, fonctionnalités attendues ou délais de livraison..."
+                          className="w-full bg-[#0A0A0A] text-[#FAF9F6] border border-[#FAF9F6] px-4 py-3 font-sans text-sm focus:outline-none focus:border-[#60A5FA] placeholder:text-[#FAF9F6]/40 resize-none"
+                        />
+                      </div>
+
+                      <div className="font-mono text-[11px] text-[#FAF9F6]/60 flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-[#60A5FA]" />
+                        <span>Ce message est sécurisé en JSON puis transmis instantanément sur WhatsApp.</span>
+                      </div>
+
+                      <BrutalistButton
+                        type="submit"
+                        variant="dark-primary"
+                        className="w-full py-4 text-sm font-bold tracking-wider uppercase"
+                      >
+                        ENVOYER LE MESSAGE (WHATSAPP & JSON)
+                      </BrutalistButton>
+                    </form>
+                  )}
                 </div>
               </div>
             </div>
@@ -480,19 +1091,27 @@ export default function App() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="py-12 border-t border-neutral-100 bg-white">
-        <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="text-lg font-black tracking-tighter uppercase">Gervais Azanga Ayissi</div>
-          <p className="text-sm text-neutral-400 font-medium">© {new Date().getFullYear()} Tous droits réservés.</p>
-          <div className="flex gap-8 text-sm font-bold text-neutral-400">
-            <a href="https://github.com/gerazayisti" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">GitHub</a>
-            <a href="https://cm.linkedin.com/in/gervais-azanga-ayissi" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">LinkedIn</a>
-          </div>
-        </div>
-      </footer>
+      {/* Footer 4 Colonnes Strictes avec sceau maître secret */}
+      <Footer 
+        onNavigate={scrollTo} 
+        onTriggerMasterAdmin={() => setIsDashboardOpen(true)}
+      />
 
+      {/* Terminal Shinobi IA Gervais */}
       <ChatWidget />
+
+      {/* Lightbox d'inspection haute résolution de design */}
+      <DesignLightbox 
+        design={activeDesignLightbox} 
+        onClose={() => setActiveDesignLightbox(null)} 
+      />
+
+      {/* Terminal Maître Sécurisé (Code, Design, Expériences, Profil, Leads JSON & Sécurité) */}
+      <AdminDashboardModal 
+        isOpen={isDashboardOpen} 
+        onClose={() => setIsDashboardOpen(false)} 
+        onDataUpdated={refreshPortfolioData} 
+      />
     </div>
   );
 }

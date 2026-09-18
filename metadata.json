@@ -1,5 +1,8 @@
 {
-  "name": "Copy of Gervais Azanga Portfolio",
-  "description": "A high-end, monochrome professional portfolio for Gervais Azanga, featuring project showcases, experience timeline, and an integrated Gemini-powered AI assistant.",
-  "requestFramePermissions": []
+  "name": "Gervais Azanga | Portfolio Constructiviste Shinobi",
+  "description": "Portfolio haut de gamme au style Brutalisme Constructiviste Bleu & Manga Naruto Shippuden pour Gervais Azanga, Tech Leader, Consultant IA & UI/UX Designer.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
