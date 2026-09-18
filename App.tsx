@@ -326,17 +326,7 @@ export default function App() {
                       </span>
                       <label className="cursor-pointer px-4 py-2 bg-[#1E40AF] hover:bg-[#1E40AF]/90 text-[#FAF9F6] font-mono text-xs font-bold uppercase border border-[#FAF9F6] flex items-center gap-2 shadow-[3px_3px_0px_0px_#FAF9F6] transition-transform active:translate-x-0.5 active:translate-y-0.5">
                         <Camera className="w-4 h-4 text-[#FAF9F6]" />
-                        <span>CHANGER LA PHOTO PRINCIPALE</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleHeroPhotoUpload}
-                        />
-                      </label>
-                      <span className="font-mono text-[9px] text-[#FAF9F6]/80">
-                        Sélectionnez votre fichier 20260626_125901.jpg
-                      </span>
+                        
                     </div>
                   </div>
 
@@ -347,20 +337,6 @@ export default function App() {
                       <span>Photo principale mise à jour avec succès !</span>
                     </div>
                   )}
-
-                  {/* Bouton mobile visible pour importation directe */}
-                  <div className="mt-2.5 sm:hidden">
-                    <label className="cursor-pointer w-full py-2 bg-[#0A0A0A] text-[#FAF9F6] border border-[#1E40AF] font-mono text-xs font-bold uppercase flex items-center justify-center gap-2 shadow-[2px_2px_0px_0px_#1E40AF]">
-                      <Camera className="w-3.5 h-3.5 text-[#60A5FA]" />
-                      <span>IMPORTER LA PHOTO (20260626_125901.jpg)</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleHeroPhotoUpload}
-                      />
-                    </label>
-                  </div>
 
                   {/* Nom Poppins 700 + rôle kicker bleu en dessous */}
                   <div className="pt-4 space-y-1">
