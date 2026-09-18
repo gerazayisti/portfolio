@@ -374,5 +374,6 @@ export const DEFAULT_PROFILE: ProfileInfo = {
   email: "gerazayisti@gmail.com",
   location: "Yaoundé, Cameroun",
   githubUrl: "https://github.com/gerazayisti",
-  availability: "DISPONIBLE POUR MISSIONS CRITIQUES"
+  availability: "DISPONIBLE POUR MISSIONS CRITIQUES",
+  heroImageUrl: "/20260626_125901.jpg"
 };

@@ -23,7 +23,9 @@ import {
   Sliders,
   Plus,
   Phone,
-  CheckCircle
+  CheckCircle,
+  Camera,
+  UploadCloud
 } from 'lucide-react';
 import { AWARDS, EDUCATION, SKILLS, CERTIFICATIONS, VOLUNTEER_WORK } from './constants';
 import { Project, DesignProject, Experience, ProfileInfo } from './types';
@@ -32,6 +34,7 @@ import {
   getAllDesigns, 
   getAllExperiences, 
   getProfileInfo, 
+  saveProfileInfo,
   saveClientMessage 
 } from './services/storageService';
 import { Kicker } from './components/Kicker';
@@ -52,6 +55,36 @@ export default function App() {
   const [designsList, setDesignsList] = useState<DesignProject[]>([]);
   const [experiencesList, setExperiencesList] = useState<Experience[]>([]);
   const [profileInfo, setProfileInfo] = useState<ProfileInfo>(getProfileInfo());
+
+  // Image principale du Hero (GETEC 2026 / Gestock+ 20260626_125901.jpg)
+  const FALLBACK_AVATAR = "/gervais-azanga-fallback.jpg";
+  const [heroImageSrc, setHeroImageSrc] = useState<string>(
+    profileInfo.heroImageUrl || "/20260626_125901.jpg"
+  );
+  const [isPhotoUpdatedNotice, setIsPhotoUpdatedNotice] = useState(false);
+
+  useEffect(() => {
+    if (profileInfo.heroImageUrl) {
+      setHeroImageSrc(profileInfo.heroImageUrl);
+    }
+  }, [profileInfo.heroImageUrl]);
+
+  const handleHeroPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      const updated = { ...profileInfo, heroImageUrl: dataUrl };
+      saveProfileInfo(updated);
+      setProfileInfo(updated);
+      setHeroImageSrc(dataUrl);
+      setIsPhotoUpdatedNotice(true);
+      setTimeout(() => setIsPhotoUpdatedNotice(false), 5000);
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Navigation et onglets de projets (Code vs Design)
   const [projectsTab, setProjectsTab] = useState<'code' | 'design'>('code');
@@ -263,21 +296,69 @@ export default function App() {
                     <RasenganRings size={160} stroke="#1E40AF" />
                   </div>
 
-                  {/* Image N&B, cadre noir 1px, rayon 0px */}
-                  <div className="relative aspect-[4/5] w-full border border-[#0A0A0A] overflow-hidden bg-[#0A0A0A]">
+                  {/* Image cadre constructiviste 1px, 0px radius */}
+                  <div className="relative aspect-[4/5] w-full border border-[#0A0A0A] overflow-hidden bg-[#0A0A0A] group">
                     <img
-                      src="https://media.licdn.com/dms/image/v2/D4E03AQG3Q7E_9Q_9aw/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1718222444155?e=1746662400&v=beta&t=M8-9e-R6-v1t9_9t1-S9-v_r_W1-y_R_W1_R_W1_R_W1"
+                      src={heroImageSrc}
+                      onError={() => {
+                        if (heroImageSrc !== FALLBACK_AVATAR) {
+                          setHeroImageSrc(FALLBACK_AVATAR);
+                        }
+                      }}
                       alt="Gervais Azanga Ayissi"
-                      className="w-full h-full object-cover grayscale contrast-125"
+                      className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                      referrerPolicy="no-referrer"
                     />
                     
                     {/* Corner rivets */}
-                    <span className="absolute top-2 left-2 font-mono text-[9px] bg-[#0A0A0A] text-[#FAF9F6] px-2 py-0.5 border border-[#FAF9F6]">
+                    <span className="absolute top-2 left-2 font-mono text-[9px] bg-[#0A0A0A] text-[#FAF9F6] px-2 py-0.5 border border-[#FAF9F6] uppercase tracking-wider">
                       GERVAIS_AZANGA.RAW
                     </span>
                     <span className="absolute bottom-2 right-2 font-mono text-[9px] bg-[#1E40AF] text-[#FAF9F6] px-2 py-0.5 font-bold">
                       忍 S-RANK
                     </span>
+
+                    {/* Contrôle rapide d'importation au survol */}
+                    <div className="absolute inset-0 bg-[#0A0A0A]/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-4 gap-2 text-center backdrop-blur-[2px]">
+                      <span className="font-mono text-[11px] font-bold text-[#FAF9F6] tracking-wider uppercase">
+                        PHOTO PRINCIPALE DU PORTFOLIO
+                      </span>
+                      <label className="cursor-pointer px-4 py-2 bg-[#1E40AF] hover:bg-[#1E40AF]/90 text-[#FAF9F6] font-mono text-xs font-bold uppercase border border-[#FAF9F6] flex items-center gap-2 shadow-[3px_3px_0px_0px_#FAF9F6] transition-transform active:translate-x-0.5 active:translate-y-0.5">
+                        <Camera className="w-4 h-4 text-[#FAF9F6]" />
+                        <span>CHANGER LA PHOTO PRINCIPALE</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleHeroPhotoUpload}
+                        />
+                      </label>
+                      <span className="font-mono text-[9px] text-[#FAF9F6]/80">
+                        Sélectionnez votre fichier 20260626_125901.jpg
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Notification de mise à jour de photo */}
+                  {isPhotoUpdatedNotice && (
+                    <div className="mt-2 p-2 bg-[#1E40AF] text-[#FAF9F6] border border-[#0A0A0A] font-mono text-xs flex items-center gap-2 animate-in fade-in">
+                      <CheckCircle className="w-4 h-4 text-[#60A5FA] shrink-0" />
+                      <span>Photo principale mise à jour avec succès !</span>
+                    </div>
+                  )}
+
+                  {/* Bouton mobile visible pour importation directe */}
+                  <div className="mt-2.5 sm:hidden">
+                    <label className="cursor-pointer w-full py-2 bg-[#0A0A0A] text-[#FAF9F6] border border-[#1E40AF] font-mono text-xs font-bold uppercase flex items-center justify-center gap-2 shadow-[2px_2px_0px_0px_#1E40AF]">
+                      <Camera className="w-3.5 h-3.5 text-[#60A5FA]" />
+                      <span>IMPORTER LA PHOTO (20260626_125901.jpg)</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleHeroPhotoUpload}
+                      />
+                    </label>
                   </div>
 
                   {/* Nom Poppins 700 + rôle kicker bleu en dessous */}

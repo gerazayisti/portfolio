@@ -90,4 +90,5 @@ export interface ProfileInfo {
   location: string;
   githubUrl: string;
   availability: string;
+  heroImageUrl?: string;
 }
