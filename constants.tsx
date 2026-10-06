@@ -29,12 +29,12 @@ export const VOLUNTEER_WORK: Volunteer[] = [
   { role: "Fondateur", organization: "g-connect", period: "Présent" },
   { role: "NASA Space App Lead Ebolowa", organization: "NASA", period: "2025 - Présent" },
   { role: "GDG Organiser", organization: "Google Developers Group", period: "2024 - Présent" },
-  { role: "GDSC Co-lead", organization: "Google Developer Student Clubs", period: "2024" },
-  { role: "Deeplearning IA Lead Yaoundé", organization: "DeepLearning.AI", period: "2023" },
+  { role: "Développeur, Designer & Marketing", organization: "ONG JCAC", period: "2023 - 2025" },
   { role: "Délégué d'étudiant", organization: "UY1 (Informatique)", period: "2022 - 2025" },
-  { role: "Infographe", organization: "AEFAS", period: "2023" },
+  { role: "GDSC Co-lead", organization: "Google Developer Student Clubs", period: "2024" },
   { role: "Designer & Responsable Communauté", organization: "XR4GOD", period: "2024" },
-  { role: "Développeur, Designer & Marketing", organization: "ONG JCAC", period: "2023 - 2025" }
+  { role: "Deeplearning IA Lead Yaoundé", organization: "DeepLearning.AI", period: "2023" },
+  { role: "Infographe", organization: "AEFAS", period: "2023" }
 ];
 
 export const EXPERIENCES: Experience[] = [
@@ -94,18 +94,6 @@ export const EXPERIENCES: Experience[] = [
     ]
   },
   {
-    role: "Designer web",
-    company: "Decatech",
-    location: "Yaoundé, Cameroun",
-    period: "Mai - Juin 2025",
-    type: "Freelance",
-    description: "Conception UX/UI et collaboration avec l'équipe produit pour la cohérence visuelle.",
-    tasks: [
-      "Réalisation de maquettes et tests utilisateurs pour améliorer l'expérience client.",
-      "Collaboration avec l'équipe produit afin d'assurer la cohérence visuelle et fonctionnelle."
-    ]
-  },
-  {
     role: "Directeur de l'information",
     company: "JUSA",
     location: "Yaoundé, Cameroun",
@@ -118,15 +106,15 @@ export const EXPERIENCES: Experience[] = [
     ]
   },
   {
-    role: "Designer web & développeur web",
-    company: "T-sea Inc",
+    role: "Designer web",
+    company: "Decatech",
     location: "Yaoundé, Cameroun",
-    period: "Juin 2023 - février 2024",
+    period: "Mai - Juin 2025",
     type: "Freelance",
-    description: "Conception et développement de sites web responsives adaptés aux besoins clients.",
+    description: "Conception UX/UI et collaboration avec l'équipe produit pour la cohérence visuelle.",
     tasks: [
-      "Création d'interfaces modernes et cohérentes, alignées sur l'identité visuelle de chaque projet.",
-      "Intégration de solutions interactives et optimisation des performances."
+      "Réalisation de maquettes et tests utilisateurs pour améliorer l'expérience client.",
+      "Collaboration avec l'équipe produit afin d'assurer la cohérence visuelle et fonctionnelle."
     ]
   },
   {
@@ -139,6 +127,18 @@ export const EXPERIENCES: Experience[] = [
     tasks: [
       "Coordination des équipes techniques pour le développement et l'intégration des modules web et mobile.",
       "Supervision de la phase de test et de déploiement au sein des établissements partenaires."
+    ]
+  },
+  {
+    role: "Designer web & développeur web",
+    company: "T-sea Inc",
+    location: "Yaoundé, Cameroun",
+    period: "Juin 2023 - février 2024",
+    type: "Freelance",
+    description: "Conception et développement de sites web responsives adaptés aux besoins clients.",
+    tasks: [
+      "Création d'interfaces modernes et cohérentes, alignées sur l'identité visuelle de chaque projet.",
+      "Intégration de solutions interactives et optimisation des performances."
     ]
   },
   {

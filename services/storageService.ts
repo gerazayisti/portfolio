@@ -6,6 +6,9 @@ const STORAGE_KEYS = {
   DESIGNS: 'gervais_custom_designs_v2',
   EXPERIENCES: 'gervais_custom_experiences_v2',
   PROFILE: 'gervais_custom_profile_v2',
+  SEEN_CODE_PROJECTS: 'gervais_seen_default_code_projects_v1',
+  SEEN_DESIGNS: 'gervais_seen_default_designs_v1',
+  SEEN_EXPERIENCES: 'gervais_seen_default_experiences_v1',
   MESSAGES: 'gervais_lead_messages_v1',
   AUTH_SESSION: 'gervais_admin_auth_session_v1',
   PASSCODE: 'gervais_admin_master_passcode_v1'
@@ -74,6 +77,22 @@ export function logoutMaster(): void {
   }
 }
 
+// Ajoute en tête de la liste personnalisée les éléments par défaut apparus depuis la dernière visite.
+// Les clés déjà vues sont mémorisées : un élément supprimé depuis l'admin ne revient pas.
+function mergeNewDefaults<T>(stored: T[], defaults: T[], keyOf: (item: T) => string, seenStorageKey: string): T[] {
+  let seen: string[] = [];
+  try {
+    const rawSeen = JSON.parse(localStorage.getItem(seenStorageKey) || '[]');
+    if (Array.isArray(rawSeen)) seen = rawSeen;
+  } catch {
+    seen = [];
+  }
+  const storedKeys = new Set(stored.map(keyOf));
+  const fresh = defaults.filter((item) => !seen.includes(keyOf(item)) && !storedKeys.has(keyOf(item)));
+  localStorage.setItem(seenStorageKey, JSON.stringify(defaults.map(keyOf)));
+  return fresh.length > 0 ? [...fresh, ...stored] : stored;
+}
+
 // ==========================================
 // 2. PROJETS CODE & SYSTÈMES
 // ==========================================
@@ -82,9 +101,11 @@ export function getAllCodeProjects(): Project[] {
   if (typeof window === 'undefined') return PROJECTS;
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.CODE_PROJECTS);
-    if (!raw) return PROJECTS;
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : PROJECTS;
+    const parsed = raw ? JSON.parse(raw) : null;
+    const stored: Project[] | null = Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+    const merged = mergeNewDefaults(stored ?? PROJECTS, PROJECTS, (p) => p.title, STORAGE_KEYS.SEEN_CODE_PROJECTS);
+    if (stored && merged !== stored) saveAllCodeProjects(merged);
+    return merged;
   } catch (err) {
     console.error('Erreur lecture projets code:', err);
     return PROJECTS;
@@ -147,7 +168,10 @@ export function getAllDesigns(): DesignProject[] {
       return DESIGN_PROJECTS;
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DESIGN_PROJECTS;
+    const stored: DesignProject[] | null = Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+    const merged = mergeNewDefaults(stored ?? DESIGN_PROJECTS, DESIGN_PROJECTS, (d) => d.id, STORAGE_KEYS.SEEN_DESIGNS);
+    if (stored && merged !== stored) saveAllDesigns(merged);
+    return merged;
   } catch (err) {
     console.error('Erreur lecture designs:', err);
     return DESIGN_PROJECTS;
@@ -207,9 +231,11 @@ export function getAllExperiences(): Experience[] {
   if (typeof window === 'undefined') return EXPERIENCES;
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.EXPERIENCES);
-    if (!raw) return EXPERIENCES;
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : EXPERIENCES;
+    const parsed = raw ? JSON.parse(raw) : null;
+    const stored: Experience[] | null = Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+    const merged = mergeNewDefaults(stored ?? EXPERIENCES, EXPERIENCES, (e) => e.company, STORAGE_KEYS.SEEN_EXPERIENCES);
+    if (stored && merged !== stored) saveAllExperiences(merged);
+    return merged;
   } catch (err) {
     console.error('Erreur lecture experiences:', err);
     return EXPERIENCES;
