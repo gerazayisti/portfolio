@@ -39,16 +39,18 @@ export const VOLUNTEER_WORK: Volunteer[] = [
 
 export const EXPERIENCES: Experience[] = [
   {
-    role: "Consultant Technique & Architecte Numérique",
+    role: "Consultant — Développement & Design de l'ENT",
     company: "CAMEDU (camedu.cm)",
     location: "Yaoundé, Cameroun",
     period: "Septembre 2026 - Présent",
     type: "Consultant",
-    description: "Missions de conseil et d'ingénierie logicielle pour la plateforme nationale d'éducation numérique et les Espaces Numériques de Travail (ENT) du Cameroun.",
+    description: "Consultant en charge du développement et du design de l'Espace Numérique de Travail (ENT) de CAMEDU, plateforme de gestion d'établissements scolaires au Cameroun (ent.camedu.cm).",
     tasks: [
-      "Audit et conception de l'architecture des Espaces Numériques de Travail (ENT) pour élèves, parents, enseignants et universités.",
-      "Conseil technique sur l'interopérabilité des flux scolaires (enseignement de base, secondaire, supérieur et formation professionnelle).",
-      "Optimisation de la résilience, de la performance et de l'accessibilité multi-terminaux à l'échelle nationale."
+      "Développement fullstack de l'ENT en monorepo : API NestJS (PostgreSQL, Redis, MinIO), web Next.js et application Flutter (Android & Windows).",
+      "Design UI/UX du site public et des espaces de l'ENT : identité visuelle, parcours d'accès, catalogue des modules et tarifs.",
+      "Conception du travail hors ligne et de la synchronisation entre le serveur de l'établissement (PC de l'école) et le serveur central.",
+      "Modules de gestion scolaire : configuration de l'établissement, facturation, comptabilité, paie, personnel, examens, rapports et documents.",
+      "Mise en ligne sur VPS avec intégration continue, tests de bout en bout et déploiement automatique."
     ]
   },
   {
@@ -199,6 +201,53 @@ export const SKILLS: SkillSet = {
 
 export const PROJECTS: Project[] = [
   {
+    title: "ENT CAMEDU",
+    role: "Consultant — Développeur Fullstack & Designer UI/UX",
+    description: "Espace Numérique de Travail de CAMEDU : plateforme de gestion d'établissements scolaires au Cameroun, accessible sur le web, Android et Windows, y compris sans connexion.",
+    features: [
+      "Gestion complète de l'établissement : années, classes, matières, examens, documents et cartes",
+      "Facturation, comptabilité, paie et gestion du personnel",
+      "Travail hors ligne et synchronisation entre le PC de l'école et le serveur central",
+      "Site public, page d'accès à l'ENT et catalogue des modules conçus de bout en bout"
+    ],
+    tags: ["EdTech", "NestJS", "Next.js", "Flutter", "Offline-first"],
+    impact: "En ligne sur ent.camedu.cm · Web, Android & Windows",
+    imageUrl: "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=2070&auto=format&fit=crop",
+    demoUrl: "https://ent.camedu.cm",
+    githubUrl: "https://github.com/gerazayisti"
+  },
+  {
+    title: "Finders",
+    role: "Lead Architect & Fullstack Developer",
+    description: "Plateforme de récupération des documents perdus sur le campus (CNI, carte d'étudiant, reçus, relevés), en pilote à la Faculté des Sciences de l'Université de Yaoundé I.",
+    features: [
+      "Signalement, recherche et réclamation des documents trouvés depuis l'application étudiant",
+      "Dépôt physique sécurisé au bureau de l'association partenaire, sans rendez-vous entre inconnus",
+      "Paiement Mobile Money de 500 FCFA avec répartition automatique entre trouveur, association et plateforme",
+      "Console web pour agents et administrateurs : dépôts, remises et règlements mensuels"
+    ],
+    tags: ["Campus", "Flutter", "NestJS", "Mobile Money", "PostgreSQL"],
+    impact: "Pilote à l'Université de Yaoundé I · finders.africa",
+    imageUrl: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?q=80&w=2070&auto=format&fit=crop",
+    demoUrl: "https://finders.africa",
+    githubUrl: "https://github.com/gerazayisti"
+  },
+  {
+    title: "DCOU Digital Platform",
+    role: "Lead Developer & UI/UX Designer",
+    description: "Plateforme numérique de la Direction du Centre des Œuvres Universitaires de l'Université de Yaoundé I pour la gestion des cités universitaires et du logement étudiant.",
+    features: [
+      "Dépôt de dossier de logement en ligne : pièces justificatives, choix de la cité et suivi du dossier",
+      "Commission d'attribution numérique : quorum, votes et décisions par dossier",
+      "Paiement des loyers, reçus vérifiables et renouvellements",
+      "Espace d'administration : registre des chambres, infrastructures, activités, notifications et archives"
+    ],
+    tags: ["GovTech", "Next.js", "Logement Étudiant", "Université Yaoundé 1"],
+    impact: "Projet en cours pour les cités universitaires de l'UY1",
+    imageUrl: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?q=80&w=2069&auto=format&fit=crop",
+    githubUrl: "https://github.com/gerazayisti"
+  },
+  {
     title: "Gestock+",
     role: "Lead Architect & Dev Mobile / PC",
     description: "Solution complète de caisse (POS) et gestion intelligente des stocks et ventes sur Mobile et PC pour commerces et PME.",
@@ -299,6 +348,17 @@ export const PROJECTS: Project[] = [
 
 export const DESIGN_PROJECTS: DesignProject[] = [
   {
+    id: "design-camedu-ent",
+    title: "ENT CAMEDU — Site Public & Espaces",
+    client: "CAMEDU",
+    date: "Septembre 2026 - Présent",
+    typeOfWork: "UI/UX Web, Mobile & Desktop",
+    description: "Design de l'Espace Numérique de Travail de CAMEDU : site public aux couleurs de la marque, page d'accès et catalogue des modules, interfaces de gestion scolaire cohérentes entre web, Android et Windows.",
+    imageUrl: "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=2070&auto=format&fit=crop",
+    tools: ["Figma", "Design System", "Next.js", "Flutter"],
+    demoUrl: "https://ent.camedu.cm"
+  },
+  {
     id: "design-gestock",
     title: "Gestock+ Mobile & Caisse POS",
     client: "NUMERID / Gestock+ Tech",
@@ -368,7 +428,7 @@ export const DEFAULT_PROFILE: ProfileInfo = {
   kicker: "DISTINCTION & ARCHITECTURE LOGICIELLE",
   headlineH1: "Donnez à vos idées une rigueur et une puissance numérique.",
   headlineH1Highlight: "puissance numérique",
-  bioHero: "Tech Leader, Entrepreneur & Bâtisseur de solutions à fort impact. Animé d'une profonde intuition entrepreneuriale, je capte instantanément l'essence stratégique de chaque projet pour concevoir et déployer des solutions ultra-rapides, robustes et viscéralement orientées utilisateur. Fondateur de NUMERID, architecte de Gestock+, Papyrus & ASSO's, et consultant pour CAMEDU.",
+  bioHero: "Tech Leader, Entrepreneur & Bâtisseur de solutions à fort impact. Animé d'une profonde intuition entrepreneuriale, je capte instantanément l'essence stratégique de chaque projet pour concevoir et déployer des solutions ultra-rapides, robustes et viscéralement orientées utilisateur. Fondateur de NUMERID, architecte de Gestock+, Papyrus, Finders & ASSO's, et consultant en développement et design de l'ENT de CAMEDU.",
   phone: "+237 695 18 37 68",
   whatsappNumber: "237695183768",
   email: "gerazayisti@gmail.com",
