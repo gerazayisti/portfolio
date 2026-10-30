@@ -11,36 +11,53 @@ const STORAGE_KEYS = {
   SEEN_EXPERIENCES: 'gervais_seen_default_experiences_v1',
   MESSAGES: 'gervais_lead_messages_v1',
   AUTH_SESSION: 'gervais_admin_auth_session_v1',
-  PASSCODE: 'gervais_admin_master_passcode_v1'
+  PASSCODE_HASH: 'gervais_admin_master_passcode_hash_v2'
 };
 
-const DEFAULT_PASSCODE = 'azanga2026';
-const LEGACY_PASSCODE = 'gerazayisti';
+const LEGACY_PASSCODE_KEY = 'gervais_admin_master_passcode_v1';
+
+// Empreinte PBKDF2-SHA256 du code d'accès : le code lui-même ne figure ni dans le dépôt public ni dans le bundle.
+const MASTER_PASSCODE_SALT = 'a0c24cee386f5f72ee3c27ec0dd0a0b2';
+const MASTER_PASSCODE_HASH = '425f3217b61d71e00f957cd9f083131fe4f1200fceeb0df5799dbc7a18362223';
+const MASTER_PASSCODE_ITERATIONS = 600000;
 
 // ==========================================
 // 1. AUTHENTIFICATION SÉCURISÉE MAÎTRE
 // ==========================================
 
-export function getMasterPasscode(): string {
-  if (typeof window === 'undefined') return DEFAULT_PASSCODE;
+async function hashPasscode(passcode: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', encoder.encode(passcode), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', hash: 'SHA-256', salt: encoder.encode(MASTER_PASSCODE_SALT), iterations: MASTER_PASSCODE_ITERATIONS },
+    key,
+    256
+  );
+  return Array.from(new Uint8Array(bits), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function getMasterPasscodeHash(): string {
   try {
-    return localStorage.getItem(STORAGE_KEYS.PASSCODE) || DEFAULT_PASSCODE;
+    return localStorage.getItem(STORAGE_KEYS.PASSCODE_HASH) || MASTER_PASSCODE_HASH;
   } catch {
-    return DEFAULT_PASSCODE;
+    return MASTER_PASSCODE_HASH;
   }
 }
 
-export function verifyMasterPasscode(input: string): boolean {
+export async function verifyMasterPasscode(input: string): Promise<boolean> {
   if (!input) return false;
-  const current = getMasterPasscode().trim();
-  const cleaned = input.trim();
-  return cleaned === current || cleaned === LEGACY_PASSCODE || cleaned === DEFAULT_PASSCODE;
+  try {
+    return (await hashPasscode(input.trim())) === getMasterPasscodeHash();
+  } catch (err) {
+    console.error('Erreur verification mot de passe maitre:', err);
+    return false;
+  }
 }
 
-export function updateMasterPasscode(newPasscode: string): boolean {
+export async function updateMasterPasscode(newPasscode: string): Promise<boolean> {
   if (!newPasscode || newPasscode.trim().length < 4) return false;
   try {
-    localStorage.setItem(STORAGE_KEYS.PASSCODE, newPasscode.trim());
+    localStorage.setItem(STORAGE_KEYS.PASSCODE_HASH, await hashPasscode(newPasscode.trim()));
     return true;
   } catch (err) {
     console.error('Erreur mise a jour mot de passe maitre:', err);
@@ -57,9 +74,10 @@ export function isMasterAuthenticated(): boolean {
   }
 }
 
-export function loginMaster(passcode: string): boolean {
-  if (verifyMasterPasscode(passcode)) {
+export async function loginMaster(passcode: string): Promise<boolean> {
+  if (await verifyMasterPasscode(passcode)) {
     try {
+      localStorage.removeItem(LEGACY_PASSCODE_KEY);
       sessionStorage.setItem(STORAGE_KEYS.AUTH_SESSION, 'true');
       return true;
     } catch {

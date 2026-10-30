@@ -28,7 +28,6 @@ import {
   loginMaster,
   logoutMaster,
   updateMasterPasscode,
-  getMasterPasscode,
   exportFullPortfolioBackup,
   importFullPortfolioBackup,
   resetAllToDefaults
@@ -183,9 +182,9 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   };
 
   // Authentification
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginMaster(passcodeInput)) {
+    if (await loginMaster(passcodeInput)) {
       setIsAuthenticated(true);
       setPasscodeError(null);
       showToast('Accès Maître autorisé. Bienvenue Gervais.');
@@ -495,13 +494,13 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   // ACTIONS SÉCURITÉ & BACKUP
   // ====================================================
 
-  const handleChangePasscode = (e: React.FormEvent) => {
+  const handleChangePasscode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPasscode.trim().length < 4) {
       alert('Le mot de passe doit comporter au moins 4 caractères.');
       return;
     }
-    if (updateMasterPasscode(newPasscode)) {
+    if (await updateMasterPasscode(newPasscode)) {
       setPasscodeSuccess(true);
       setNewPasscode('');
       showToast('Code d’accès Maître modifié avec succès.');
@@ -648,10 +647,6 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
                 <span>DÉVERROUILLER LA CONSOLE</span>
               </button>
             </form>
-
-            <div className="pt-4 border-t border-[#0A0A0A]/20 w-full font-mono text-[11px] text-[#6B6B6B]">
-              <span>Astuce d'accès : Code par défaut <strong className="text-[#0A0A0A]">azanga2026</strong></span>
-            </div>
           </div>
         ) : (
           /* ====================================================
@@ -1856,12 +1851,13 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
                     </div>
 
                     <p className="font-sans text-xs text-[#6B6B6B] leading-relaxed">
-                      Ce code protège l'accès à vos modifications de contenu, uploads et leads clients.
+                      Ce code protège l'accès à vos modifications de contenu, uploads et leads clients. Le changement s'applique uniquement à ce navigateur.
                     </p>
 
                     <form onSubmit={handleChangePasscode} className="flex flex-col sm:flex-row gap-3 max-w-lg">
                       <input
-                        type="text"
+                        type="password"
+                        autoComplete="new-password"
                         required
                         value={newPasscode}
                         onChange={(e) => setNewPasscode(e.target.value)}
